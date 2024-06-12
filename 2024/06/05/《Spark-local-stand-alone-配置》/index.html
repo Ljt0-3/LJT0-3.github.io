@@ -170,7 +170,378 @@
     </div>
     
     <div class="content" v-pre>
-        
+        <hr>
+<span id="more"></span>
+<p>如果4040端口被占用, 会顺延到4041 … 4042…<br><a target="_blank" rel="noopener" href="https://dlcdn.apache.org/spark/spark-3.2.0/spark-3.2.0-bin-hadoop3.2.tgz">https://dlcdn.apache.org/spark/spark-3.2.0/spark-3.2.0-bin-hadoop3.2.tgz</a></p>
+<p>条件</p>
+<ul>
+<li>PYTHON 推荐3.8</li>
+<li>JDK 1.8<br>Anaconda On Linux 安装</li>
+</ul>
+<p>本次课程的Python环境需要安装到Linux(虚拟机)和Windows(本机)上</p>
+<p>参见最下方, 附1: Anaconda On Linux 安装</p>
+<p>解压</p>
+<p>解压下载的Spark安装包</p>
+<p>tar -zxvf spark-3.2.0-bin-hadoop3.2.tgz -C &#x2F;export&#x2F;server&#x2F;</p>
+<p>环境变量</p>
+<p>配置Spark由如下5个环境变量需要设置</p>
+<ul>
+<li>SPARK_HOME: 表示Spark安装路径在哪里 </li>
+<li>PYSPARK_PYTHON: 表示Spark想运行Python程序, 那么去哪里找python执行器 </li>
+<li>JAVA_HOME: 告知Spark Java在哪里 </li>
+<li>HADOOP_CONF_DIR: 告知Spark Hadoop的配置文件在哪里 </li>
+<li>HADOOP_HOME: 告知Spark  Hadoop安装在哪里</li>
+</ul>
+<p>这5个环境变量 都需要配置在: &#x2F;etc&#x2F;profile中</p>
+<p>PYSPARK_PYTHON和 JAVA_HOME 需要同样配置在: &#x2F;root&#x2F;.bashrc中</p>
+<p>上传Spark安装包</p>
+<p>资料中提供了: spark-3.2.0-bin-hadoop3.2.tgz</p>
+<p>上传这个文件到Linux服务器中<br>将其解压, 课程中将其解压(安装)到: &#x2F;export&#x2F;server内.<br>tar -zxvf spark-3.2.0-bin-hadoop3.2.tgz -C &#x2F;export&#x2F;server&#x2F;<br>由于spark目录名称很长, 给其一个软链接:<br>ln -s &#x2F;export&#x2F;server&#x2F;spark-3.2.0-bin-hadoop3.2 &#x2F;export&#x2F;server&#x2F;spark</p>
+<p>测试<br>bin&#x2F;pyspark</p>
+<p>bin&#x2F;pyspark 程序, 可以提供一个  交互式的 Python解释器环境, 在这里面可以写普通python代码, 以及spark代码</p>
+<p>如图:</p>
+<p>在这个环境内, 可以运行spark代码</p>
+<p>图中的: parallelize 和 map 都是spark提供的API</p>
+<p>sc.parallelize([1,2,3,4,5]).map(lambda x: x + 1).collect()</p>
+<p>WEB UI (4040)</p>
+<p>Spark程序在运行的时候, 会绑定到机器的4040端口上.</p>
+<p>4040端口是一个WEBUI端口, 可以在浏览器内打开:</p>
+<p>输入:服务器ip:4040 即可打开:</p>
+<p>打开监控页面后, 可以发现 在程序内仅有一个Driver<br>因为我们是Local模式, Driver即管理 又 干活.<br>同时, 输入jps</p>
+<p>可以看到local模式下的唯一进程存在</p>
+<p>这个进程 即是master也是worker</p>
+<p>bin&#x2F;spark-shell - 了解</p>
+<p>同样是一个解释器环境, 和bin&#x2F;pyspark不同的是, 这个解释器环境 运行的不是python代码, 而是scala程序代码</p>
+<pre><code>scala&gt; sc.parallelize(Array(1,2,3,4,5)).map(x=&gt; x + 1).collect()
+res0: Array[Int] = Array(2, 3, 4, 5, 6)
+</code></pre>
+<blockquote>
+<p>这个仅作为了解即可, 因为这个是用于scala语言的解释器环境</p>
+</blockquote>
+<p>bin&#x2F;spark-submit (PI)</p>
+<p>作用: 提交指定的Spark代码到Spark环境中运行<br>使用方法:</p>
+<pre><code># 语法
+bin/spark-submit [可选的一些选项] jar包或者python代码的路径 [代码的参数]
+
+# 示例
+bin/spark-submit /export/server/spark/examples/src/main/python/pi.py 10
+# 此案例 运行Spark官方所提供的示例代码 来计算圆周率值.  后面的10 是主函数接受的参数, 数字越高, 计算圆周率越准确.
+</code></pre>
+<p>Spark StandAlone环境部署</p>
+<p>新角色 历史服务器</p>
+<blockquote>
+<p>历史服务器不是Spark环境的必要组件, 是可选的.</p>
+</blockquote>
+<blockquote>
+<p>回忆: 在YARN中 有一个历史服务器, 功能: 将YARN运行的程序的历史日志记录下来, 通过历史服务器方便用户查看程序运行的历史信息.</p>
+</blockquote>
+<p>Spark的历史服务器, 功能: 将Spark运行的程序的历史日志记录下来, 通过历史服务器方便用户查看程序运行的历史信息.</p>
+<p>搭建集群环境, 我们一般<code>推荐将历史服务器也配置上</code>, 方面以后查看历史记录<br>​<br>集群规划</p>
+<p>课程中 使用三台Linux虚拟机来组成集群环境, 非别是:</p>
+<p>node1\ node2\ node3</p>
+<p>node1运行: Spark的Master进程  和 1个Worker进程</p>
+<p>node2运行: spark的1个worker进程</p>
+<p>node3运行: spark的1个worker进程</p>
+<p>整个集群提供: 1个master进程 和 3个worker进程</p>
+<p>安装</p>
+<p>在所有机器安装Python(Anaconda)</p>
+<p>参考 附1内容, 如何在Linux上安装anaconda</p>
+<p>同时不要忘记 都创建pyspark虚拟环境 以及安装虚拟环境所需要的包pyspark jieba pyhive</p>
+<p>在所有机器配置环境变量</p>
+<p>参考 Local模式下 环境变量的配置内容</p>
+<p>确保3台都配置</p>
+<p>配置配置文件</p>
+<p>进入到spark的配置文件目录中, cd $SPARK_HOME&#x2F;conf</p>
+<p>配置workers文件</p>
+<pre><code># 改名, 去掉后面的.template后缀
+mv workers.template workers
+
+# 编辑worker文件
+vim workers
+# 将里面的localhost删除, 追加
+node1
+node2
+node3
+到workers文件内
+
+# 功能: 这个文件就是指示了  当前SparkStandAlone环境下, 有哪些worker
+</code></pre>
+<p>配置spark-env.sh文件</p>
+<pre><code># 1. 改名
+mv spark-env.sh.template spark-env.sh
+
+# 2. 编辑spark-env.sh, 在底部追加如下内容
+
+## 设置JAVA安装目录
+JAVA_HOME=/export/server/jdk
+
+## HADOOP软件配置文件目录，读取HDFS上文件和运行YARN集群
+HADOOP_CONF_DIR=/export/server/hadoop/etc/hadoop
+YARN_CONF_DIR=/export/server/hadoop/etc/hadoop
+
+## 指定spark老大Master的IP和提交任务的通信端口
+# 告知Spark的master运行在哪个机器上
+export SPARK_MASTER_HOST=node1
+# 告知sparkmaster的通讯端口
+export SPARK_MASTER_PORT=7077
+# 告知spark master的 webui端口
+SPARK_MASTER_WEBUI_PORT=8080
+
+# worker cpu可用核数
+SPARK_WORKER_CORES=1
+# worker可用内存
+SPARK_WORKER_MEMORY=1g
+# worker的工作通讯地址
+SPARK_WORKER_PORT=7078
+# worker的 webui地址
+SPARK_WORKER_WEBUI_PORT=8081
+
+## 设置历史服务器
+# 配置的意思是  将spark程序运行的历史日志 存到hdfs的/sparklog文件夹中
+SPARK_HISTORY_OPTS=&quot;-Dspark.history.fs.logDirectory=hdfs://node1:8020/sparklog/ -Dspark.history.fs.cleaner.enabled=true&quot;
+</code></pre>
+<p>注意, 上面的配置的路径 要根据你自己机器实际的路径来写</p>
+<p>在HDFS上创建程序运行历史记录存放的文件夹:</p>
+<pre><code>hadoop fs -mkdir /sparklog
+hadoop fs -chmod 777 /sparklog
+</code></pre>
+<p>配置spark-defaults.conf文件</p>
+<pre><code># 1. 改名
+mv spark-defaults.conf.template spark-defaults.conf
+
+# 2. 修改内容, 追加如下内容
+# 开启spark的日期记录功能
+spark.eventLog.enabled 	true
+# 设置spark日志记录的路径
+spark.eventLog.dir	 hdfs://node1:8020/sparklog/ 
+# 设置spark日志是否启动压缩
+spark.eventLog.compress 	true
+</code></pre>
+<p>配置log4j.properties 文件 [可选配置]</p>
+<pre><code># 1. 改名
+mv log4j.properties.template log4j.properties
+
+# 2. 修改内容 参考下图
+</code></pre>
+<blockquote>
+<p>这个文件的修改不是必须的,  为什么修改为WARN. 因为Spark是个话痨</p>
+<p>会疯狂输出日志, 设置级别为WARN 只输出警告和错误日志, 不要输出一堆废话.</p>
+</blockquote>
+<p>将Spark安装文件夹  分发到其它的服务器上</p>
+<pre><code>scp -r spark-3.1.2-bin-hadoop3.2 root@node2:/export/server/
+scp -r spark-3.1.2-bin-hadoop3.2 root@node3:/export/server/
+</code></pre>
+<p>不要忘记, 在node2和node3上 给spark安装目录增加软链接</p>
+<p>ln -s &#x2F;export&#x2F;server&#x2F;spark-3.2.0-bin-hadoop3.2 &#x2F;export&#x2F;server&#x2F;spark</p>
+<p>检查</p>
+<p>检查每台机器的:</p>
+<p>JAVA_HOME</p>
+<p>SPARK_HOME</p>
+<p>PYSPARK_PYTHON</p>
+<p>等等 环境变量是否正常指向正确的目录</p>
+<p>启动历史服务器</p>
+<p>sbin&#x2F;start-history-server.sh</p>
+<p>启动Spark的Master和Worker进程</p>
+<pre><code># 启动全部master和worker
+sbin/start-all.sh
+
+# 或者可以一个个启动:
+# 启动当前机器的master
+sbin/start-master.sh
+# 启动当前机器的worker
+sbin/start-worker.sh
+
+# 停止全部
+sbin/stop-all.sh
+
+# 停止当前机器的master
+sbin/stop-master.sh
+
+# 停止当前机器的worker
+sbin/stop-worker.sh
+</code></pre>
+<p>查看Master的WEB UI</p>
+<p>默认端口master我们设置到了8080</p>
+<p>如果端口被占用, 会顺延到8081 …;8082… 8083… 直到申请到端口为止</p>
+<p>可以在日志中查看, 具体顺延到哪个端口上:</p>
+<p>Service ‘MasterUI’ could not bind on port 8080. Attempting port 8081.</p>
+<p>连接到StandAlone集群</p>
+<p>bin&#x2F;pyspark</p>
+<p>执行:</p>
+<pre><code>bin/pyspark --master spark://node1:7077
+# 通过--master选项来连接到 StandAlone集群
+# 如果不写--master选项, 默认是local模式运行
+
+sc.parallelize([1,2,3,4,5]).map(lambda x: x + 1).collect()
+</code></pre>
+<p>bin&#x2F;spark-shell</p>
+<pre><code>bin/spark-shell --master spark://node1:7077
+# 同样适用--master来连接到集群使用
+</code></pre>
+<h1 id=""><a href="#" class="headerlink" title=""></a></h1><pre><code>// 测试代码
+sc.parallelize(Array(1,2,3,4,5)).map(x=&gt; x + 1).collect()
+</code></pre>
+<p>bin&#x2F;spark-submit (PI)</p>
+<pre><code>bin/spark-submit --master spark://node1:7077 /export/server/spark/examples/src/main/python/pi.py 100
+# 同样使用--master来指定将任务提交到集群运行
+</code></pre>
+<p>查看历史服务器WEB UI</p>
+<p>历史服务器的默认端口是: 18080</p>
+<p>我们启动在node1上, 可以在浏览器打开:</p>
+<p>node1:18080来进入到历史服务器的WEB UI上.</p>
+<p>zookeeper</p>
+<p>​<br>附1 Anaconda On Linux 安装 (单台服务器)</p>
+<p>安装</p>
+<p>上传安装包:</p>
+<p>上传: 资料中提供的<code>Anaconda3-2021.05-Linux-x86_64.sh</code>文件到Linux服务器上</p>
+<p>安装:</p>
+<p>sh .&#x2F;Anaconda3-2021.05-Linux-x86_64.sh<br>输入yes后就安装完成了.</p>
+<p>安装完成后, <code>退出finalshell 重新进来</code>:</p>
+<p>看到这个Base开头表明安装好了.</p>
+<p>base是默认的虚拟环境.</p>
+<p>国内源</p>
+<p>如果你安装好后, 没有出现base, 可以打开:&#x2F;root&#x2F;.condarc这个文件, 追加如下内容:</p>
+<pre><code>channels:
+  - defaults
+show_channel_urls: true
+default_channels:
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/r
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/msys2
+custom_channels:
+  conda-forge: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+  msys2: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+  bioconda: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+  menpo: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+  pytorch: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+  simpleitk: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+</code></pre>
+<p>附2 spark-submit和pyspark相关参数</p>
+<p>客户端工具我们可以用的有:</p>
+<ul>
+<li>bin&#x2F;pyspark: pyspark解释器spark环境</li>
+<li>bin&#x2F;spark-shell: scala解释器spark环境</li>
+<li>bin&#x2F;spark-submit: 提交jar包或Python文件执行的工具</li>
+<li>bin&#x2F;spark-sql: sparksql客户端工具</li>
+</ul>
+<p>这4个客户端工具的参数基本通用.</p>
+<p>以spark-submit 为例:</p>
+<p>bin&#x2F;spark-submit –master spark:&#x2F;&#x2F;node1:7077 xxx.py</p>
+<pre><code>Usage: spark-submit [options] &lt;app jar | python file | R file&gt; [app arguments]
+Usage: spark-submit --kill [submission ID] --master [spark://...]
+Usage: spark-submit --status [submission ID] --master [spark://...]
+Usage: spark-submit run-example [options] example-class [example args]
+
+Options:
+  --master MASTER_URL         spark://host:port, mesos://host:port, yarn,
+                              k8s://https://host:port, or local (Default: local[*]).
+  --deploy-mode DEPLOY_MODE   部署模式 client 或者 cluster 默认是client
+  --class CLASS_NAME          运行java或者scala class(for Java / Scala apps).
+  --name NAME                 程序的名字
+  --jars JARS                 Comma-separated list of jars to include on the driver
+                              and executor classpaths.
+  --packages                  Comma-separated list of maven coordinates of jars to include
+                              on the driver and executor classpaths. Will search the local
+                              maven repo, then maven central and any additional remote
+                              repositories given by --repositories. The format for the
+                              coordinates should be groupId:artifactId:version.
+  --exclude-packages          Comma-separated list of groupId:artifactId, to exclude while
+                              resolving the dependencies provided in --packages to avoid
+                              dependency conflicts.
+  --repositories              Comma-separated list of additional remote repositories to
+                              search for the maven coordinates given with --packages.
+  --py-files PY_FILES         指定Python程序依赖的其它python文件
+  --files FILES               Comma-separated list of files to be placed in the working
+                              directory of each executor. File paths of these files
+                              in executors can be accessed via SparkFiles.get(fileName).
+  --archives ARCHIVES         Comma-separated list of archives to be extracted into the
+                              working directory of each executor.
+
+  --conf, -c PROP=VALUE       手动指定配置
+  --properties-file FILE      Path to a file from which to load extra properties. If not
+                              specified, this will look for conf/spark-defaults.conf.
+
+  --driver-memory MEM         Driver的可用内存(Default: 1024M).
+  --driver-java-options       Driver的一些Java选项
+  --driver-library-path       Extra library path entries to pass to the driver.
+  --driver-class-path         Extra class path entries to pass to the driver. Note that
+                              jars added with --jars are automatically included in the
+                              classpath.
+
+  --executor-memory MEM       Executor的内存 (Default: 1G).
+
+  --proxy-user NAME           User to impersonate when submitting the application.
+                          This argument does not work with --principal /     --keytab.
+
+  --help, -h                  显示帮助文件
+  --verbose, -v               Print additional debug output.
+  --version,                  打印版本
+
+ Cluster deploy mode only(集群模式专属):
+  --driver-cores NUM          Driver可用的的CPU核数(Default: 1).
+
+ Spark standalone or Mesos with cluster deploy mode only:
+  --supervise                 如果给定, 可以尝试重启Driver
+
+ Spark standalone, Mesos or K8s with cluster deploy mode only:
+  --kill SUBMISSION_ID        指定程序ID kill
+  --status SUBMISSION_ID      指定程序ID 查看运行状态
+
+ Spark standalone, Mesos and Kubernetes only:
+  --total-executor-cores NUM  整个任务可以给Executor多少个CPU核心用
+
+ Spark standalone, YARN and Kubernetes only:
+  --executor-cores NUM        单个Executor能使用多少CPU核心
+
+ Spark on YARN and Kubernetes only(YARN模式下):
+  --num-executors NUM         Executor应该开启几个
+  --principal PRINCIPAL       Principal to be used to login to KDC.
+  --keytab KEYTAB             The full path to the file that contains the keytab for the
+                              principal specified above.
+
+ Spark on YARN only:
+  --queue QUEUE_NAME          指定运行的YARN队列(Default: &quot;default&quot;).
+</code></pre>
+<p>附3 Windows系统配置Anaconda</p>
+<p>安装</p>
+<p>打开资料中提供的:Anaconda3-2021.05-Windows-x86_64.exe文件,或者去官网下载:[<a target="_blank" rel="noopener" href="https://www.anaconda.com/products/individual#Downloads]">https://www.anaconda.com/products/individual#Downloads]</a></p>
+<p>打开后,一直点击<code>Next</code>下一步即可:<br>如果想要修改安装路径, 可以修改<br>不必勾选<br>最终点击Finish完成安装</p>
+<p>打开开始菜单, 搜索Anaconda<br>出现如图的程序, 安装成功.</p>
+<p>打开 <code>Anaconda Prompt</code>程序:<br>出现<code>base</code>说明安装正确.</p>
+<p>配置国内源</p>
+<p>Anaconda默认源服务器在国外, 网速比较慢, 配置国内源加速网络下载.</p>
+<p>打开上图中的 <code>Anaconda Prompt</code>程序:<br>执行:<br>conda config –set show_channel_urls yes<br>​</p>
+<p>然后用记事本打开:<br>C:\Users\用户名.condarc文件, 将如下内容替换进文件内,保存即可:</p>
+<pre><code>channels:
+  - defaults
+show_channel_urls: true
+default_channels:
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/r
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/msys2
+custom_channels:
+  conda-forge: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+  msys2: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+  bioconda: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+  menpo: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+  pytorch: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+  simpleitk: https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud
+</code></pre>
+<p>创建虚拟环境</p>
+<pre><code># 创建虚拟环境 pyspark, 基于Python 3.8
+conda activate base 
+conda create -n pyspark python=3.8
+
+# 切换到虚拟环境内
+conda activate pyspark
+
+# 在虚拟环境内安装包
+pip install pyhive pyspark jieba -i https://pypi.tuna.tsinghua.edu.cn/simple 
+
+pip install pyspark==3.2.0 -i https://pypi.tuna.tsinghua.edu.cn/simple
+</code></pre>
+<hr>
+
     </div>
     
     
